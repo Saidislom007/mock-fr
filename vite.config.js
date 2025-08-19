@@ -4,12 +4,9 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ mode }) => {
-  const isDev = mode === 'development'
-
   return {
-    // 🔑 Agar GitHub Pages’da deploy qilsangiz — bu yerda repo nomini yozing
-    // Render yoki Vercel’da esa faqat '/' bo‘lib qolishi kerak
-    base: isDev ? '/' : '/cdi-front/',
+    // ✅ Vercel uchun faqat '/' bo‘lishi kerak
+    base: '/',
 
     plugins: [
       react(),
