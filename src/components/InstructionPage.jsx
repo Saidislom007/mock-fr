@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 
 const instructions = {
   listening: {
@@ -8,7 +8,8 @@ const instructions = {
       "Answer all the questions as you listen.",
       "Write your answers on the answer sheet provided.",
       "Focus on spelling and grammar for written answers."
-    ]
+    ],
+    audio: "./audio.mp3"
   },
   reading: {
     title: "Reading Instructions",
@@ -41,17 +42,87 @@ const instructions = {
 
 const InstructionPage = ({ section }) => {
   const sectionInstructions = instructions[section];
+  const [recording, setRecording] = useState(false);
+  const [audioURL, setAudioURL] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   if (!sectionInstructions) return <p>Section not found.</p>;
 
+  // 🎙️ Start recording
+  const startRecording = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorderRef.current = new MediaRecorder(stream);
+
+    mediaRecorderRef.current.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunksRef.current.push(event.data);
+      }
+    };
+
+    mediaRecorderRef.current.onstop = () => {
+      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const url = URL.createObjectURL(audioBlob);
+      setAudioURL(url);
+      audioChunksRef.current = []; // clear buffer
+    };
+
+    mediaRecorderRef.current.start();
+    setRecording(true);
+  };
+
+  // ⏹️ Stop recording
+  const stopRecording = () => {
+    mediaRecorderRef.current.stop();
+    setRecording(false);
+  };
+
   return (
     <div className="instruction-page">
-      <h1>{sectionInstructions.title}</h1>
-      <ul>
+      <h1 className="text-4xl">{sectionInstructions.title}</h1>
+      <ul className="list-disc ml-6 mt-4">
         {sectionInstructions.content.map((item, index) => (
-          <li key={index}>{item}</li>
+          <li className="list-none" key={index}>{item}</li>
         ))}
       </ul>
+
+      {/* 🎧 Listening audio player */}
+      {section === "listening" && sectionInstructions.audio && (
+        <div className="mt-6  justify-items-center">
+          <audio controls>
+            <source src={sectionInstructions.audio} type="audio/mpeg" />
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+      )}
+
+      {/* 🎙️ Speaking recorder */}
+      {section === "speaking" && (
+        <div className="mt-6">
+          {!recording ? (
+            <button
+              onClick={startRecording}
+              className="bg-green-500 text-white px-4 py-2 rounded h-12 w-1/9  "
+            >
+              🎙️ Start Recording
+            </button>
+          ) : (
+            <button
+              onClick={stopRecording}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+              ⏹️ Stop Recording
+            </button>
+          )}
+
+          {audioURL && (
+            <div className="mt-4">
+              <p>Your recording:</p>
+              <audio controls src={audioURL}></audio>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
