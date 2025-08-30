@@ -19,9 +19,9 @@ const Part2 = ({ data, onNext, isRecording, prepTime, timer, onStart, onStop }) 
 
   return (
     <div className="card">
-      <h1>🗣️ Speaking — Part 2</h1>
+      <h1> Speaking — Part 2</h1>
       <h2>{data.topic}</h2>
-      <ul>
+      <ul className="text-lg">
         {data.points.map((point, i) => (
           <li key={i}>{point}</li>
         ))}
