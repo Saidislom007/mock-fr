@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./writing.css";
 import InstructionPage from "../components/InstructionPage";
-import ReadingTimer from "../components/ReadingTimer"; // timer component
+import ReadingTimer from "../components/ReadingTimer";
 
 const TELEGRAM_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID;
@@ -18,11 +18,9 @@ export default function Writing() {
   const [testStarted, setTestStarted] = useState(false);
   const [timerKey, setTimerKey] = useState(0);
 
-  // 🔧 Font zoom
   const increaseFont = () => setFontSize((prev) => Math.min(prev + 2, 48));
   const decreaseFont = () => setFontSize((prev) => Math.max(prev - 2, 10));
 
-  // 🔹 Component mount bo‘lganda oldingi progress va user info
   useEffect(() => {
     const fetchWritingTest = async () => {
       try {
@@ -47,7 +45,6 @@ export default function Writing() {
   }, []);
 
   const wordCount = (text) => text.trim().split(/\s+/).filter(Boolean).length;
-  const charCount = (text) => text.replace(/\s/g, "").length;
 
   const startTest = () => {
     setTestStarted(true);
@@ -119,7 +116,6 @@ ${taskText}
 
     return (
       <div className={`writing-container ${darkMode ? "dark" : ""}`}>
-        {/* Yuqori panel */}
         {testStarted && !testFinished && (
           <div style={{ position: "fixed", top: 20, right: 20, zIndex: 9999, display: "flex", gap: 10 }}>
             <ReadingTimer key={timerKey} onTimeUp={handleTimeUp} isRunning={testStarted && !testFinished} />
@@ -130,7 +126,6 @@ ${taskText}
           </div>
         )}
 
-        {/* InstructionPage agar test boshlanmagan bo‘lsa */}
         {!testStarted ? (
           <div style={{ textAlign: "center", marginTop: "3rem" }}>
             <InstructionPage section={"writing"} />
@@ -142,40 +137,46 @@ ${taskText}
               <h1>📝 IELTS Writing Task {taskNum}</h1>
             </div>
 
-            <div className="prompt">
-              {prompt}
-              {taskNum === 1 && image && <img src={image} alt="Task 1" className="task-image" />}
-            </div>
+            <div className="content">
+              {/* Chap tomonda savol */}
+              <div className="prompt">
+                {prompt}
+                {taskNum === 1 && image && <img src={image} alt="Task 1" className="task-image" />}
+              </div>
 
-            <textarea
-              className="writing-area"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="Write here..."
-              rows={18}
-              style={{ fontSize: `${fontSize}px` }}
-            />
+              {/* O‘ng tomonda javob */}
+              <div className="answer-section">
+                <textarea
+                  className="writing-area"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  placeholder="Write here..."
+                  style={{ fontSize: `${fontSize}px` }}
+                />
+                <div className="meta">
+                  Word Count: <strong>{wordCount(value)}</strong>
+                </div>
 
-            <div className="meta">Word Count: <strong>{wordCount(value)}</strong></div>
-
-            <div className="btns">
-              {taskNum === 2 && (
-                <button className="back-btn" onClick={() => setStep(1)}>⬅️ Previous</button>
-              )}
-              <button
-                className="main-btn"
-                onClick={async () => {
-                  handleSave();
-                  await sendToTelegram(value, taskNum);
-                  if (taskNum === 1) setStep(2);
-                  else {
-                    alert("✅ Both texts sent to admin");
-                    setTestFinished(true);
-                  }
-                }}
-              >
-                {taskNum === 1 ? "Next ➡️" : "✅ Complete"}
-              </button>
+                <div className="btns">
+                  {taskNum === 2 && (
+                    <button className="back-btn" onClick={() => setStep(1)}>⬅️ Previous</button>
+                  )}
+                  <button
+                    className="main-btn"
+                    onClick={async () => {
+                      handleSave();
+                      await sendToTelegram(value, taskNum);
+                      if (taskNum === 1) setStep(2);
+                      else {
+                        alert("✅ Both texts sent to admin");
+                        setTestFinished(true);
+                      }
+                    }}
+                  >
+                    {taskNum === 1 ? "Next ➡️" : "✅ Complete"}
+                  </button>
+                </div>
+              </div>
             </div>
           </>
         )}
