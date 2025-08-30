@@ -6,7 +6,6 @@
   padding: 3rem 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   transition: background 0.3s ease;
-
   display: flex;
   flex-direction: column; /* default */
 }
@@ -15,7 +14,10 @@
   background: linear-gradient(to right, #1e293b, #0f172a);
   color: #f1f5f9;
 }
-
+.task-image{
+  padding: 20px;
+  height: 80%;
+}
 /* Yuqori panel */
 .topbar {
   display: flex;
@@ -27,6 +29,7 @@
 }
 /* Chap va o‘ng ustunlarni yonma-yon qilish */
 .content {
+  padding: auto;
   display: flex;
   gap: 2rem;
   flex: 1;
@@ -44,6 +47,7 @@
   font-weight: 500;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   overflow-y: auto;
+  height: 100%;
 }
 
 /* O‘ng ustun (javob yozish joyi) */
