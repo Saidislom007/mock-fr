@@ -1,6 +1,9 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState } from "react";
 import PrivateRoute from "./components/PrivateRoute";
+// full screen qoshildi
+
 
 // Pages
 import LoginPage from "./pages/LoginPage";
@@ -11,13 +14,53 @@ import SpeakingPage from "./pages/Speaking";
 import Listening from "./pages/Listening";
 import MarketPage from "./pages/MarketPage";
 
-// Components
-import TextHighlighter from "./components/HighlightableText";
-import Parent from "./components/Parent";
-
 export default function App() {
+  const [isFull, setIsFull] = useState(false);
+
+  const toggleFullScreen = () => {
+    const elem = document.documentElement;
+    if (!isFull) {
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+      setIsFull(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+      setIsFull(false);
+    }
+  };
+
   return (
     <BrowserRouter>
+      {/* Header doimiy bo‘ladi */}
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "10px",
+          background: "#f3f4f6",
+        }}
+      >
+        <img
+          src="./full.png"
+          alt="fullscreen"
+          className="h-10 cursor-pointer fixed top-2 left-1 z-50"
+          onClick={toggleFullScreen}
+        />
+      </header>
+
+      {/* Routing qismi */}
       <Routes>
         {/* Public route */}
         <Route path="/" element={<LoginPage />} />
@@ -63,8 +106,6 @@ export default function App() {
             </PrivateRoute>
           }
         />
-
-        {/* Optional / extra pages */}
         <Route
           path="/market"
           element={
@@ -73,8 +114,9 @@ export default function App() {
             </PrivateRoute>
           }
         />
-        {/* Agar Parent component ishlatilsa */}
-        {/* <Route path="/parent" element={<Parent />} /> */}
+
+        {/* 404 sahifa */}
+        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
       </Routes>
     </BrowserRouter>
   );
