@@ -1,41 +1,37 @@
+// src/pages/SpeakingPage.jsx
 import { useEffect, useState } from "react";
 import Part1 from "../components/Part1";
 import Part2 from "../components/Part2";
 import Part3 from "../components/Part3";
 import { useRecorder } from "../common/Recorder";
-import InstructionPage from "../components/InstructionPage";
 import "./speaking.css";
 
 const SpeakingPage = () => {
   const [data, setData] = useState(null);
   const [part, setPart] = useState(1);
   const [questionIndex, setQuestionIndex] = useState(0);
-  const [testStarted, setTestStarted] = useState(false);
-
-  const [prepTime, setPrepTime] = useState(0);
-  const [timer, setTimer] = useState(0);
 
   const {
     isRecording,
+    prepTime,
+    timer,
+    setPrepTime,
+    setTimer,
     startRecording,
     stopRecording,
     startPrepAndRecording,
   } = useRecorder({ part, questionIndex });
 
-  const user = JSON.parse(localStorage.getItem("user")) || {
-    id: "—",
-    name: "Anon",
-    last_name: "",
-    middle_name: "",
-    phone: "",
-  };
-
-  // 🔹 API dan speaking test ma’lumotlarini olish
+  // 🔹 API dan testlarni olish
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/speaking-tests/`)
-      .then((res) => res.json())
-      .then((data) => {
-        const test = data[0];
+    const fetchData = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/speaking-tests/`
+        );
+        const result = await res.json();
+        const test = result[0];
+
         const parsed = {
           part1: test.part1_questions.flatMap((q) =>
             q.question_text
@@ -51,88 +47,64 @@ const SpeakingPage = () => {
                 ?.split("\r\n")
                 .filter(Boolean) || [],
           },
-          part3: test.part3_questions.flatMap((q) =>
-            q.question_text
-              .split("?")
-              .map((q) => q.trim())
-              .filter(Boolean)
-              .map((q) => q + "?")
-          ),
+          part3: test.part3_questions.map((q) => ({
+            title: q.title,
+            questions: q.question_text
+              .split("\r\n")
+              .map((qq) => qq.trim())
+              .filter(Boolean),
+          })),
         };
+
         setData(parsed);
-      })
-      .catch((err) => console.error("API xatosi:", err));
+      } catch (err) {
+        console.error("API xatosi:", err);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // 🔹 LocalStorage progressni load qilish
+  // 🔹 Prep time tugaganda recording boshlash
   useEffect(() => {
-    const savedProgress = JSON.parse(localStorage.getItem("speaking_test_progress"));
-    const savedTimer = JSON.parse(localStorage.getItem("speaking_timer"));
-
-    if (savedProgress) {
-      setPart(savedProgress.part || 1);
-      setQuestionIndex(savedProgress.questionIndex || 0);
-      setTestStarted(savedProgress.testStarted || false);
-    }
-    if (savedTimer) {
-      setPrepTime(savedTimer.prepTime || 0);
-      setTimer(savedTimer.timer || 0);
-    }
-  }, []);
-
-  // 🔹 PrepTime countdown
-  useEffect(() => {
-    if (!testStarted) return;
-
     if (prepTime > 0) {
       const id = setTimeout(() => setPrepTime((p) => p - 1), 1000);
       return () => clearTimeout(id);
-    } else if (prepTime === 0 && !isRecording && timer > 0) {
+    }
+    if (prepTime === 0 && !isRecording && timer > 0) {
       startRecording();
     }
-  }, [prepTime, isRecording, timer, testStarted]);
+  }, [prepTime]);
 
-  // 🔹 Answer timer countdown
+  // 🔹 Timer tugaganda recording to‘xtatish
   useEffect(() => {
-    if (!testStarted) return;
-
-    if (isRecording && timer > 0) {
+    if (timer > 0) {
       const id = setTimeout(() => setTimer((t) => t - 1), 1000);
       return () => clearTimeout(id);
-    } else if (timer === 0 && isRecording) {
-      stopRecording();
     }
-  }, [timer, isRecording, testStarted]);
+    if (timer === 0 && isRecording) stopRecording();
+  }, [timer]);
 
-  // 🔹 Timer va progressni localStorage saqlash
-  useEffect(() => {
-    if (testStarted) {
-      localStorage.setItem(
-        "speaking_test_progress",
-        JSON.stringify({ part, questionIndex, testStarted })
-      );
-      localStorage.setItem(
-        "speaking_timer",
-        JSON.stringify({ prepTime, timer })
-      );
-    }
-  }, [part, questionIndex, prepTime, timer, testStarted]);
-
-  // 🔹 Start Test
-  const startTest = () => {
-    setTestStarted(true);
-    setPrepTime(30); // Masalan, 30s prep
-    setTimer(90); // Masalan, 90s answer
-  };
-
-  // 🔹 Next question / part
+  // 🔹 Keyingi savolga o‘tish yoki part o‘zgartirish
   const handleNextQuestion = () => {
-    const totalQuestions = part === 1 ? data.part1.length : data.part3.length;
-    if (questionIndex < totalQuestions - 1) {
-      setQuestionIndex((i) => i + 1);
-    } else {
+    if (!data) return;
+
+    if (part === 1) {
+      if (questionIndex < data.part1.length - 1) {
+        setQuestionIndex((i) => i + 1);
+      } else {
+        setQuestionIndex(0);
+        setPart(2); // Part2 ga o‘tadi
+      }
+    } else if (part === 2) {
       setQuestionIndex(0);
-      setPart((p) => p + 1);
+      setPart(3); // Part3 ga o‘tadi
+    } else if (part === 3) {
+      if (questionIndex < data.part3.length - 1) {
+        setQuestionIndex((i) => i + 1);
+      } else {
+        console.log("✅ Test tugadi"); // Hammasi tugadi
+      }
     }
   };
 
@@ -140,53 +112,50 @@ const SpeakingPage = () => {
 
   return (
     <div className="speaking-container">
-      {!testStarted ? (
-        <div style={{ textAlign: "center", marginTop: "3rem" }}>
-          <InstructionPage section={"speaking"} />
-          <button className="nav-button" onClick={startTest}>
-            Start Test
-          </button>
-        </div>
-      ) : (
-        <>
-          {part === 1 && (
-            <Part1
-              data={data.part1}
-              questionIndex={questionIndex}
-              onNext={handleNextQuestion}
-              isRecording={isRecording}
-              prepTime={prepTime}
-              timer={timer}
-              onStart={() => startPrepAndRecording({ prepTime, timer })}
-              onStop={stopRecording}
-            />
-          )}
+      {part === 1 && (
+        <Part1
+          data={data.part1}
+          onStart={startPrepAndRecording}
+          onStop={stopRecording}
+          onFinish={() => {
+            setPart(2); // Faqat part ni o'zgartiramiz
+            console.log("Finished Part 1")
+          }}
+        />
+      )}
 
-          {part === 2 && (
-            <Part2
-              data={data.part2}
-              onNext={() => setPart(3)}
-              isRecording={isRecording}
-              prepTime={prepTime}
-              timer={timer}
-              onStart={() => startPrepAndRecording({ prepTime, timer })}
-              onStop={stopRecording}
-            />
-          )}
+      {part === 2 && (
+        <Part2
+          data={data.part2}
+          questionIndex={questionIndex}
+          onNext={() => {
+            setQuestionIndex(0);
+            setPart(3);
+          }}
+          isRecording={isRecording}
+          prepTime={prepTime}
+          timer={timer}
+          onStart={startPrepAndRecording}
+          onStop={stopRecording}
+          onFinish={() => {
+            setQuestionIndex(0);
+            setPart(3);
+          }}
+        />
+      )}
 
-          {part === 3 && (
-            <Part3
-              data={data.part3}
-              questionIndex={questionIndex}
-              onNext={handleNextQuestion}
-              isRecording={isRecording}
-              prepTime={prepTime}
-              timer={timer}
-              onStart={() => startPrepAndRecording({ prepTime, timer })}
-              onStop={stopRecording}
-            />
-          )}
-        </>
+      {part === 3 && (
+        <Part3
+          data={data.part3[questionIndex]}
+          questionIndex={questionIndex}
+          onNext={handleNextQuestion}
+          isRecording={isRecording}
+          prepTime={prepTime}
+          timer={timer}
+          onStart={startPrepAndRecording}
+          onStop={stopRecording}
+          onFinish={() => console.log("✅ Speaking test tugadi")}
+        />
       )}
     </div>
   );
