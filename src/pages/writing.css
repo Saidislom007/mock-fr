@@ -1,4 +1,4 @@
-/* Asosiy konteyner */
+/* Asosiy konteynerni 2 ustunga bo‘lamiz */
 .writing-container {
   background: linear-gradient(to right, #f0f4f8, #e2e8f0);
   color: #111827;
@@ -6,6 +6,9 @@
   padding: 3rem 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   transition: background 0.3s ease;
+
+  display: flex;
+  flex-direction: column; /* default */
 }
 
 .writing-container.dark {
@@ -13,24 +16,41 @@
   color: #f1f5f9;
 }
 
-/* Yuqoridagi menyu (dark mode toggle va h1) */
+/* Yuqori panel */
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
   flex-wrap: wrap;
+  width: 100%;
+}
+/* Chap va o‘ng ustunlarni yonma-yon qilish */
+.content {
+  display: flex;
+  gap: 2rem;
+  flex: 1;
+  min-height: 70vh;
 }
 
+/* Chap ustun (savol) */
 .prompt {
+  flex: 1;
   background-color: #fffbea;
   border-left: 6px solid #facc15;
   padding: 1.5rem;
-  margin-bottom: 2rem;
   border-radius: 12px;
   font-size: 17px;
   font-weight: 500;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+}
+
+/* O‘ng ustun (javob yozish joyi) */
+.answer-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .dark .prompt {
@@ -39,10 +59,11 @@
   color: #fef9c3;
 }
 
-/* Textarea (Yozish qismi) */
+/* O‘ng ustun (yozish maydoni) */
+
 .writing-area {
+  flex: 1;
   width: 100%;
-  min-height: 300px;
   padding: 1.25rem;
   font-size: 17px;
   line-height: 1.7;
@@ -60,7 +81,7 @@
   border-color: #475569;
 }
 
-/* So‘zlar va harflar soni */
+/* So‘zlar soni pastida chiqishi uchun */
 .meta {
   margin-top: 1rem;
   color: #6b7280;
@@ -71,74 +92,10 @@
   color: #94a3b8;
 }
 
-/* Feedback qismi */
-.feedback {
-  margin-top: 1rem;
-  color: #16a34a;
-  font-weight: 600;
-  font-size: 15px;
-}
-
-/* Tugmalar qatori */
+/* Tugmalar */
 .btns {
   margin-top: 2rem;
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-}
-
-/* Umumiy button uslubi */
-.main-btn,
-.back-btn,
-.pdf-btn,
-.mode-toggle {
-  padding: 0.8rem 1.4rem;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.2s ease, transform 0.15s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.main-btn:hover,
-.back-btn:hover,
-.pdf-btn:hover,
-.mode-toggle:hover {
-  transform: translateY(-1px);
-}
-
-/* Tugma ranglari */
-.main-btn {
-  background-color: #2563eb;
-  color: #fff;
-}
-.main-btn:hover {
-  background-color: #1d4ed8;
-}
-
-.back-btn {
-  background-color: #6b7280;
-  color: #fff;
-}
-.back-btn:hover {
-  background-color: #4b5563;
-}
-
-.pdf-btn {
-  background-color: #10b981;
-  color: #fff;
-}
-.pdf-btn:hover {
-  background-color: #059669;
-}
-
-.mode-toggle {
-  background-color: #f59e0b;
-  color: #fff;
-  font-size: 14px;
-}
-.mode-toggle:hover {
-  background-color: #d97706;
 }
