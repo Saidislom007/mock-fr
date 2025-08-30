@@ -1,70 +1,111 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 
+const Part1 = ({ data, onStart, onStop, onFinish }) => {
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [prepTime, setPrepTime] = useState(0);
+  const [timer, setTimer] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [started, setStarted] = useState(false);
 
-const Part1 = ({
-  data,
-  questionIndex,
-  onNext,
-  isRecording,
-  prepTime,
-  timer,
-  onStart,
-  onStop,
-}) => {
-  // ⏱️ Tayyorlanish tugagach yozishni boshlash
+  const prepRef = useRef(null);
+  const timerRef = useRef(null);
+
+  // 🔹 Savol o'zgarganda interval'larni tozalash
   useEffect(() => {
-    if (prepTime === 0 && !isRecording && timer > 0) {
-      onStart(data[questionIndex]); // recording start
-    }
-  }, [prepTime, isRecording, timer, data, questionIndex, onStart]);
+    clearInterval(prepRef.current);
+    clearInterval(timerRef.current);
+  }, [questionIndex]);
 
-  // ⏹️ Yozish tugasa avtomatik to‘xtash va navbatdagi savolga o‘tish
+  // 🔹 Prep time sanash
   useEffect(() => {
-    if (timer === 0 && isRecording) {
-      onStop(data[questionIndex]);
-      onNext();
+    if (prepTime > 0) {
+      prepRef.current = setInterval(() => {
+        setPrepTime((prev) => {
+          if (prev === 1) {
+            clearInterval(prepRef.current);
+            setIsRecording(true);
+            setTimer(30);
+            onStart && onStart(data[questionIndex]);
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
-  }, [timer, isRecording, data, questionIndex, onStop, onNext]);
+    return () => clearInterval(prepRef.current);
+  }, [prepTime, data, questionIndex, onStart]);
+
+  // 🔹 Recording sanash
+  useEffect(() => {
+    if (isRecording && timer > 0) {
+      timerRef.current = setInterval(() => {
+        setTimer((prev) => {
+          if (prev === 1) {
+            clearInterval(timerRef.current);
+            setIsRecording(false);
+
+            setTimeout(() => {
+              onStop && onStop(data[questionIndex]);
+
+              if (questionIndex < data.length - 1) {
+                setQuestionIndex((prevIdx) => prevIdx + 1);
+                setPrepTime(5); // Keyingi savol uchun prepTime
+              } else {
+                // Oxirgi savol tugaganda prepTime ni 0 qilamiz
+                setPrepTime(0);
+                onFinish && onFinish();
+              }
+            }, 0);
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [isRecording, timer, data, questionIndex, onStop, onFinish]);
 
   return (
     <div className="card">
-      <h1>🗣️ Speaking — Part 1</h1>
+      <h1>Speaking — Part 1</h1>
 
       <div className="question-box">
-        <h3>Question {questionIndex + 1}</h3>
+        <h3>Question {questionIndex + 1} of {data.length}</h3>
         <h2>{data[questionIndex]}</h2>
       </div>
 
-      {/* Tayyorlanish vaqti */}
-      {prepTime > 0 && (
-        <div className="timer preparing">🕐 Preparing: {prepTime}s</div>
-      )}
-
-      {/* Recording jarayoni */}
-      {isRecording && timer > 0 && (
-        <div className="timer recording">🎙️ Recording: {timer}s</div>
-      )}
-
-      {/* Tayyor tugagach va vaqt ham yo‘q bo‘lsa qo‘l bilan Start */}
-      {!isRecording && prepTime === 0 && timer === 0 && (
+      {!started && (
         <button
-          onClick={() => onStart(data[questionIndex])}
+          onClick={() => {
+            setPrepTime(5);
+            setStarted(true);
+          }}
           className="start-btn"
         >
           🎤 Start
         </button>
       )}
 
-      {/* Agar recording bo‘lsa Stop tugmasi */}
+      {prepTime > 0 && <div className="timer preparing">🕐 Preparing: {prepTime}s</div>}
+      {isRecording && timer > 0 && <div className="timer recording">🎙️ Recording: {timer}s</div>}
+
       {isRecording && (
         <button
           onClick={() => {
-            onStop(data[questionIndex]);
-            onNext();
+            clearInterval(timerRef.current);
+            setIsRecording(false);
+            onStop && onStop(data[questionIndex]);
+
+            if (questionIndex < data.length - 1) {
+              setQuestionIndex((prevIdx) => prevIdx + 1);
+              setPrepTime(5);
+            } else {
+              // Oxirgi savol tugaganda prepTime ni 0 qilamiz
+              setPrepTime(0);
+              onFinish && onFinish();
+            }
           }}
           className="stop-btn"
         >
-          ⏹️ Stop
+          ⏹ Stop
         </button>
       )}
     </div>
