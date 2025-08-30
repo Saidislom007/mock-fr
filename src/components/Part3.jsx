@@ -1,80 +1,74 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
+const Part3 = ({ data, onNext, isRecording, onStart, onStop }) => {
+  const [prepTime, setPrepTime] = useState(null); // Boshlashdan oldin null
+  const [timer, setTimer] = useState(0);
 
-const Part3 = ({
-  data,
-  onFinish,
-  isRecording,
-  prepTime,
-  timer,
-  onStart,
-  onStop,
-  setPrepTime,
-  setTimer,
-}) => {
-  // 🔹 Boshlang‘ich tayyorlanish va recording vaqtlarini o‘rnatish
+  // ⏱️ Tayyorlanish bosqichi
   useEffect(() => {
-    setPrepTime(60);  // 1 daqiqa tayyorlanish
-    setTimer(120);    // 2 daqiqa recording
-  }, [setPrepTime, setTimer]);
+    if (prepTime > 0) {
+      const id = setTimeout(() => setPrepTime((p) => p - 1), 1000);
+      return () => clearTimeout(id);
+    }
 
-  // 🔹 PrepTime tugagach avtomatik start
-  useEffect(() => {
-    if (prepTime === 0 && !isRecording && timer > 0) {
-      onStart(data.join(" ")); // barcha savollarni bitta stringga birlashtirib yuboramiz
+    if (prepTime === 0 && !isRecording && timer === 0) {
+      // 1 minut tugagach recordingni 2 minutga yoqamiz
+      onStart(data.title);
+      setTimer(120);
     }
   }, [prepTime, isRecording, timer, data, onStart]);
 
-  // 🔹 Timer tugagach avtomatik stop va yakunlash
+  // 🎙️ Recording bosqichi
   useEffect(() => {
-    if (timer === 0 && isRecording) {
-      onStop(data.join(" "));
-      alert("✅ Part 3 tugadi!");
-      onFinish?.();
+    if (timer > 0 && isRecording) {
+      const id = setTimeout(() => setTimer((t) => t - 1), 1000);
+      return () => clearTimeout(id);
     }
-  }, [timer, isRecording, data, onStop, onFinish]);
+
+    if (timer === 0 && isRecording) {
+      // Avtomatik stop
+      onStop(data.title);
+      onNext();
+    }
+  }, [timer, isRecording, data, onStop, onNext]);
 
   return (
     <div className="card">
-      <h1>🗣️ Speaking — Part 3</h1>
+      <h1>
+        {/* <img src="./man.svg" alt="icon" className="h-10 inline-block mr-2" /> */}
+        Speaking — Part 3
+      </h1>
+      <h2>{data.title}</h2>
 
-      <p><strong>Ko‘rsatma:</strong> Quyidagi savollarga 2 daqiqa davomida javob bering:</p>
-
-      <ul className="question-list">
-        {data.map((question, idx) => (
-          <li key={idx}>
-            <strong>Q{idx + 1}:</strong> {question}
-          </li>
+      <ul className="text-lg">
+        {data.questions.map((q, i) => (
+          <li key={i}>{q}</li>
         ))}
       </ul>
 
-      {/* Tayyorlanish vaqti */}
-      {prepTime > 0 && (
-        <div className="timer preparing">🕐 Preparing: {prepTime}s</div>
-      )}
-
-      {/* Recording */}
-      {isRecording && timer > 0 && (
-        <div className="timer recording">🎙️ Recording: {timer}s</div>
-      )}
-
-      {/* Qo‘l bilan start */}
-      {!isRecording && prepTime === 0 && timer === 0 && (
-        <button
-          onClick={() => onStart(data.join(" "))}
-          className="start-btn"
-        >
+      {/* Start tugmasi */}
+      {prepTime === null && timer === 0 && !isRecording && (
+        <button onClick={() => setPrepTime(60)} className="start-btn">
           🎤 Start
         </button>
       )}
 
-      {/* Qo‘l bilan stop */}
+      {/* Tayyorlanish vaqtini ko‘rsatish */}
+      {prepTime > 0 && (
+        <div className="timer preparing">🕐 Preparing: {prepTime}s</div>
+      )}
+
+      {/* Recording vaqtini ko‘rsatish */}
+      {isRecording && timer > 0 && (
+        <div className="timer recording">🎙️ Recording: {timer}s</div>
+      )}
+
+      {/* Qo‘lda stop tugmasi */}
       {isRecording && (
         <button
           onClick={() => {
-            onStop(data.join(" "));
-            onFinish?.();
-            alert("✅ Part 3 tugadi!");
+            onStop(data.title);
+            onNext();
           }}
           className="stop-btn"
         >
