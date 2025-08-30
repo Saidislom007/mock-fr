@@ -15,18 +15,20 @@ const Reading = () => {
 
   const [fontSize, setFontSize] = useState(16);
   const [testFinished, setTestFinished] = useState(false);
-  const [testStarted, setTestStarted] = useState(false); // test boshlangani
+  const [testStarted, setTestStarted] = useState(false);
   const [timerKey, setTimerKey] = useState(0);
 
   // 🔧 Font zoom funksiyalari
   const increaseFont = () => setFontSize((prev) => Math.min(prev + 2, 48));
   const decreaseFont = () => setFontSize((prev) => Math.max(prev - 2, 10));
 
+  // Timer tugaganda chaqiriladigan funksiya
   const handleTimeUp = () => {
     alert("Time is up! Submitting your test automatically...");
     handleFinalSubmit();
   };
 
+  // Passage natijalarini saqlash
   const handlePassageResult = (passageKey, correctCount) => {
     setResults((prev) => ({
       ...prev,
@@ -34,6 +36,7 @@ const Reading = () => {
     }));
   };
 
+  // Testni yakunlash va natijani serverga yuborish
   const handleFinalSubmit = () => {
     if (testFinished) return;
     setTestFinished(true);
@@ -66,9 +69,7 @@ const Reading = () => {
       }),
     })
       .then((response) => {
-        if (!response.ok) {
-          throw new Error("Xatolik yuz berdi.");
-        }
+        if (!response.ok) throw new Error("Xatolik yuz berdi.");
         return response.json();
       })
       .then((data) => {
@@ -80,58 +81,58 @@ const Reading = () => {
         alert("Natijalarni yuborishda xatolik yuz berdi.");
       });
   };
+
+  // Testni boshlash
   const startTest = () => {
     setTestStarted(true);
     setTestFinished(false);
-    setTimerKey(prev => prev + 1);
+    setTimerKey((prev) => prev + 1); // timer reset
   };
 
   return (
     <div className="reading-main">
-      {/* Yuqori panel */}
-      <div
-        style={{
-          position: "fixed",
-          top: "20px",
-          right: "20px",
-          zIndex: 9999,
-          display: "flex",
-          gap: "10px",
-          alignItems: "center",
-        }}
-      >
-        {testStarted && !testFinished && (
-          <ReadingTimer
-            key={timerKey}
-            onTimeUp={handleTimeUp}
-            isRunning={testStarted && !testFinished}
-          />
-        )}
-
+      {/* Yuqori panel: Timer va Font Zoom */}
+      {testStarted && !testFinished && (
         <div
           style={{
-            background: "#f0f0f0",
-            padding: "8px 16px",
-            borderRadius: "6px",
-            fontSize: "20px",
-            fontWeight: "bold",
-            boxShadow: "0 0 6px rgba(0,0,0,0.1)",
+            position: "fixed",
+            top: 20,
+            right: 20,
+            zIndex: 9999,
             display: "flex",
-            gap: "10px",
+            gap: 10,
+            alignItems: "center",
           }}
         >
-          <button onClick={decreaseFont} style={{ marginRight: "8px" }}>
-            -
-          </button>
-          <button onClick={increaseFont}>+</button>
-        </div>
-      </div>
+          <ReadingTimer
+            key={timerKey}
+            isRunning={testStarted && !testFinished}
+            onTimeUp={handleTimeUp}
+          />
 
-      {/* Agar test boshlanmagan bo‘lsa */}
+          <div
+            style={{
+              background: "#f0f0f0",
+              padding: "8px 16px",
+              borderRadius: "6px",
+              display: "flex",
+              gap: 10,
+              boxShadow: "0 0 6px rgba(0,0,0,0.1)",
+            }}
+          >
+            <button onClick={decreaseFont}>-</button>
+            <button onClick={increaseFont}>+</button>
+          </div>
+        </div>
+      )}
+
+      {/* Instruction Page: Test boshlanmagan bo‘lsa */}
       {!testStarted ? (
         <div style={{ textAlign: "center", marginTop: "3rem" }}>
-          <InstructionPage section={"reading"} />
-          <button className="nav-button" onClick={startTest}>Start Test</button>
+          <InstructionPage section="reading" />
+          <button className="nav-button" onClick={startTest}>
+            Start Test
+          </button>
         </div>
       ) : (
         <>
@@ -139,7 +140,9 @@ const Reading = () => {
           <div className="passage1">
             <Passage1
               fontSize={fontSize}
-              onResultChange={(count) => handlePassageResult("passage1", count)}
+              onResultChange={(count) =>
+                handlePassageResult("passage1", count)
+              }
             />
           </div>
 
@@ -147,7 +150,9 @@ const Reading = () => {
           <div className="passage2">
             <Passage2
               fontSize={fontSize}
-              onResultChange={(count) => handlePassageResult("passage2", count)}
+              onResultChange={(count) =>
+                handlePassageResult("passage2", count)
+              }
             />
           </div>
 
@@ -155,17 +160,11 @@ const Reading = () => {
           <div className="passage3">
             <Passage3
               fontSize={fontSize}
-              onResultChange={(count) => handlePassageResult("passage3", count)}
+              onResultChange={(count) =>
+                handlePassageResult("passage3", count)
+              }
             />
           </div>
-
-          {/* Umumiy natija */}
-          {/* <h3 style={{ textAlign: "center", marginTop: "1rem" }}>
-            Umumiy to‘g‘ri javoblar:{" "}
-            {(results.passage1 || 0) +
-              (results.passage2 || 0) +
-              (results.passage3 || 0)}
-          </h3> */}
 
           {/* Manual Complete tugmasi */}
           <div style={{ textAlign: "center", marginTop: "3rem" }}>
