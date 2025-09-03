@@ -13,7 +13,7 @@ const Section2 = ({ fontSize = 16, onResultChange, sectionIndex = 1 }) => {
   const [correctCount, setCorrectCount] = useState(0);
   const [individualCorrectCounts, setIndividualCorrectCounts] = useState({});
 
-  const testId = 1; // test identifikatori
+  const testId = 2; // test identifikatori
   const audioRef = useRef(null);
 
   // 🔹 Audio ref’larni boshqarish
