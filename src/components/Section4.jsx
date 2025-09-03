@@ -12,7 +12,7 @@ const Section4 = ({ onSubmit, sectionIndex = 3 }) => {
   const [correctCount, setCorrectCount] = useState(0);
   const [individualCorrectCounts, setIndividualCorrectCounts] = useState({});
 
-  const testId = import.meta.env.VITE_TEST_ID;
+  const testId = 2;
   const audioRef = useRef(null);
 
   // 🔹 Audio ref’larni boshqarish
