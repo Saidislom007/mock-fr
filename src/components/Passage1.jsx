@@ -20,7 +20,7 @@ const Passage1 = ({ fontSize, onResultChange }) => {
 
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_BACKEND_URL}/api/reading-tests/1/passage/1`)
+      .get(`${import.meta.env.VITE_BACKEND_URL}/api/reading-tests/2/passage/1`)
       .then((res) => {
         setPassage(res.data);
         setLoading(false);
