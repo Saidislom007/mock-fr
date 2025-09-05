@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 
 const SentenceCompletion = ({
-  number,
+  number, // savol raqami (question_number)
   questionText,
   instruction,
   question,
@@ -13,50 +13,59 @@ const SentenceCompletion = ({
 }) => {
   const [userValues, setUserValues] = useState({});
 
-  const handleChange = (blankNum, value) => {
-    const updated = { ...userValues, [blankNum]: value };
-    setUserValues(updated);
-    if (onChange) onChange(number, blankNum, value);
+  // regex: [[ ]], [[1]], [[ 2 ]] kabi barcha variantlarni ushlaydi
+  const blankRegex = /\[\[\s*(\d*)\s*\]\]/g;
+
+  // blanksArray: savolda ketma-ket paydo bo'lgan blanklar uchun ORALIQ raqamlar
+  // agar [[1]] berilgan bo'lsa -> "1", aks holda fallback sifatida (idx+1)
+  const blanksArray = useMemo(() => {
+    const arr = [];
+    const matches = Array.from(questionText.matchAll(blankRegex));
+    matches.forEach((match, idx) => {
+      const explicit = match[1] && match[1].length ? match[1] : String(idx + 1);
+      arr.push(explicit);
+    });
+    return arr;
+  }, [questionText]);
+
+  // handleChange: saqlash uchun ichki key `${number}_${blankIndex}` ishlatamiz
+  const handleChange = (blankIndex, value) => {
+    const key = `${number}_${blankIndex}`;
+    setUserValues((prev) => ({ ...prev, [key]: value }));
+    if (onChange) onChange(number, blankIndex, value);
   };
 
-  // ✅ Har doim qaysi blanklar to‘g‘ri ekanligini hisoblaymiz
+  // correctMap: har bir blank (blankIndex) uchun true/false hisoblab beradi
   const correctMap = useMemo(() => {
     const map = {};
-
-    // correctAnswer ni har doim massivga aylantiramiz
     const correctAnswersArray = Array.isArray(correctAnswer)
       ? correctAnswer
       : [correctAnswer];
 
-    // hammasini trim + lowercase qilamiz
     const normalizedAnswers = correctAnswersArray.map((ans) =>
       (ans || "").toString().trim().toLowerCase()
     );
 
-    const blanks = [...questionText.matchAll(/\[\[(\d+)\]\]/g)];
-    blanks.forEach((match) => {
-      const blankNum = match[1];
-      const userAnsNorm = (userValues[blankNum] || "")
-        .toString()
-        .trim()
-        .toLowerCase();
-
-      // foydalanuvchi javobi massivdagi istalgan biriga mos bo‘lsa to‘g‘ri
-      map[blankNum] = normalizedAnswers.includes(userAnsNorm);
+    blanksArray.forEach((blankIndex) => {
+      const key = `${number}_${blankIndex}`;
+      const userAnsNorm = (userValues[key] || "").toString().trim().toLowerCase();
+      map[blankIndex] = normalizedAnswers.includes(userAnsNorm);
     });
 
     return map;
-  }, [userValues, correctAnswer, questionText]);
+  }, [userValues, correctAnswer, blanksArray, number]);
 
-  // 📤 Har safar correctMap o‘zgarsa, umumiy hisobni yuboramiz
+  // onCorrectCountChange ga to'g'ri sonni yuboramiz (savolga tegishli)
   useEffect(() => {
     if (onCorrectCountChange) {
       const correctCount = Object.values(correctMap).filter(Boolean).length;
-      onCorrectCountChange(correctCount, number); // qNum ham yuborilyapti
+      onCorrectCountChange(correctCount, number);
     }
   }, [correctMap, number, onCorrectCountChange]);
 
-  const parts = questionText.split(/(\[\[\d+\]\])/g);
+  // render qilish uchun parts ga bo'lamiz
+  const parts = questionText.split(/(\[\[\s*\d*\s*\]\])/g);
+  let blankPos = 0;
 
   return (
     <div className="instruction">
@@ -85,36 +94,35 @@ const SentenceCompletion = ({
       >
         <p style={{ margin: 0 }}>
           {parts.map((part, idx) => {
-            const match = part.match(/\[\[(\d+)\]\]/);
-            if (match) {
-              const blankNum = match[1];
-              const isTrue = correctMap[blankNum] === true;
-              const hasValue = userValues[blankNum]?.length > 0;
+            if (part.match(blankRegex)) {
+              // blanksArray orqali aniq blankIndex olamiz (matchAll bilan muvofiq)
+              const blankIndex = blanksArray[blankPos] ?? String(blankPos + 1);
+              blankPos += 1;
+
+              const key = `${number}_${blankIndex}`;
+              const isTrue = correctMap[blankIndex] === true;
+              const hasValue = (userValues[key] || "").length > 0;
 
               return (
                 <input
-                  key={blankNum}
+                  key={key}
                   type="text"
-                  placeholder={`Q${blankNum}`}
+                  placeholder={`Q${number}`} // <- siz so'ragandek, placeholder savol raqamiga mos
                   className="border border-gray-300 p-1 mx-1 rounded"
-                  value={userValues[blankNum] || ""}
-                  disabled={submitted} // submit bo‘lsa yozishni to‘xtatamiz
+                  value={userValues[key] || ""}
+                  disabled={submitted}
                   autoComplete="off"
-                  onChange={(e) => handleChange(blankNum, e.target.value)}
+                  onChange={(e) => handleChange(blankIndex, e.target.value)}
                   style={{
                     borderColor:
-                      submitted && hasValue
-                        ? isTrue
-                          ? "green"
-                          : "red"
-                        : undefined,
-                    backgroundColor:
-                      submitted && isTrue ? "#d4edda" : undefined,
+                      submitted && hasValue ? (isTrue ? "green" : "red") : undefined,
+                    backgroundColor: submitted && isTrue ? "#d4edda" : undefined,
                   }}
                 />
               );
             }
-            return <span key={idx}>{part}</span>;
+
+            return <span key={`text-${idx}`}>{part}</span>;
           })}
         </p>
       </div>
